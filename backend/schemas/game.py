@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 # Base schema contains the shared fields expected when creating or reading a game
 class GameBase(BaseModel):
-    name: str
+    title: str
     genre: str
     release_year: int
     rating: float

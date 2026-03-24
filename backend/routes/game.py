@@ -16,3 +16,8 @@ def create_game(
   db.commit()
   db.refresh(db_game)
   return db_game
+
+@router.get("/games/", response_model=list[game_schema.Game])
+def read_games(db: Session = Depends(get_db)):
+  games = db.query(game_model.GameModel).all()
+  return games
