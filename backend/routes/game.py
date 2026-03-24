@@ -35,6 +35,7 @@ def update_game(
   if db_game is None:
     raise HTTPException(status_code=404, detail="Game not found")
   
+  # Use the model_dump method to get a dictionary of the fields that were provided in the update request
   update_data = game_update.model_dump(exclude_unset=True)
   for key, value in update_data.items():
     setattr(db_game, key, value)  
