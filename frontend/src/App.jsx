@@ -4,7 +4,6 @@ function App() {
   const [games, setGames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // NEW STATE: Memory for the form inputs. Matches our Pydantic schema!
   const [newGame, setNewGame] = useState({
     title: "",
     genre: "",
@@ -13,7 +12,6 @@ function App() {
     is_completed: false,
   });
 
-  // Fetch games on load (unchanged)
   useEffect(() => {
     fetch("http://localhost:8000/games")
       .then((response) => response.json())
@@ -24,30 +22,19 @@ function App() {
       .catch((error) => console.error("Error:", error));
   }, []);
 
-  // NEW FUNCTION: Handle form submission
   const handleAddGame = (e) => {
-    e.preventDefault(); // Stop the page from reloading!
-
-    // Send the POST request to your backend
+    e.preventDefault();
     fetch("http://localhost:8000/games", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json", // Tell FastAPI we are sending JSON
-      },
-      // Convert our React state object into a JSON string
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newGame),
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to add game");
-        }
+        if (!response.ok) throw new Error("Failed to add game");
         return response.json();
       })
       .then((addedGame) => {
-        // Success! Add the new game to our visual list immediately
         setGames([...games, addedGame]);
-
-        // Clear the form fields so the user can add another game
         setNewGame({
           title: "",
           genre: "",
@@ -59,13 +46,51 @@ function App() {
       .catch((error) => console.error("Error adding game:", error));
   };
 
+  const handleDelete = (id) => {
+    fetch(`http://localhost:8000/games/${id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to delete game");
+        setGames(games.filter((game) => game.id !== id));
+      })
+      .catch((error) => console.error("Error deleting game:", error));
+  };
+
+  // --- NEW: UPDATE FUNCTION ---
+  // We pass the entire 'game' object so we know its current status
+  const handleToggleComplete = (game) => {
+    // 1. Prepare the data: We only send the field we want to update, flipping its current boolean value
+    const updatedData = {
+      is_completed: !game.is_completed,
+    };
+
+    // 2. Send the PUT request
+    fetch(`http://localhost:8000/games/${game.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedData),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to update game");
+        return response.json();
+      })
+      .then((updatedGameFromServer) => {
+        // 3. Update React State using .map()
+        // If the ID matches, replace it with the new data from the server. Otherwise, keep the old game.
+        setGames(
+          games.map((g) => (g.id === game.id ? updatedGameFromServer : g)),
+        );
+      })
+      .catch((error) => console.error("Error updating game:", error));
+  };
+
   return (
     <div
       style={{ padding: "20px", fontFamily: "sans-serif", maxWidth: "600px" }}
     >
       <h1>My Game Library</h1>
 
-      {/* --- NEW FORM SECTION --- */}
       <div
         style={{
           background: "#f0f0f0",
@@ -83,11 +108,9 @@ function App() {
             type="text"
             placeholder="Title"
             value={newGame.title}
-            // When the user types, update ONLY the 'title' part of the state
             onChange={(e) => setNewGame({ ...newGame, title: e.target.value })}
             required
           />
-
           <input
             type="text"
             placeholder="Genre (e.g., RPG, FPS)"
@@ -95,12 +118,10 @@ function App() {
             onChange={(e) => setNewGame({ ...newGame, genre: e.target.value })}
             required
           />
-
           <input
             type="number"
             placeholder="Release Year (e.g., 2015)"
             value={newGame.release_year}
-            // Using parseInt because HTML inputs always return strings, but our backend wants a number!
             onChange={(e) =>
               setNewGame({
                 ...newGame,
@@ -109,13 +130,11 @@ function App() {
             }
             required
           />
-
           <input
             type="number"
             step="0.1"
             placeholder="Rating (1-10)"
             value={newGame.rating}
-            // parseFloat because our backend expects a float for rating
             onChange={(e) =>
               setNewGame({
                 ...newGame,
@@ -124,19 +143,16 @@ function App() {
             }
             required
           />
-
           <label>
             <input
               type="checkbox"
               checked={newGame.is_completed}
-              // Checkboxes use 'checked' instead of 'value'
               onChange={(e) =>
                 setNewGame({ ...newGame, is_completed: e.target.checked })
               }
             />{" "}
             Completed?
           </label>
-
           <button
             type="submit"
             style={{
@@ -151,9 +167,7 @@ function App() {
           </button>
         </form>
       </div>
-      {/* --- END OF FORM SECTION --- */}
 
-      {/* The game list (unchanged) */}
       {isLoading ? (
         <p>Loading games from database...</p>
       ) : (
@@ -166,12 +180,47 @@ function App() {
                 padding: "10px",
                 border: "1px solid #ccc",
                 borderRadius: "5px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <strong>{game.title}</strong> ({game.release_year}) - {game.genre}
-              <br />
-              Rating: {game.rating}/10 |{" "}
-              {game.is_completed ? "✅ Completed" : "❌ Not completed"}
+              <div>
+                <strong>{game.title}</strong> ({game.release_year}) -{" "}
+                {game.genre}
+                <br />
+                Rating: {game.rating}/10
+                {/* --- NEW: TOGGLE BUTTON --- */}
+                {/* We replaced the static text with a button that triggers our new function */}
+                <button
+                  onClick={() => handleToggleComplete(game)}
+                  style={{
+                    marginLeft: "10px",
+                    padding: "4px 8px",
+                    cursor: "pointer",
+                    background: game.is_completed ? "#28a745" : "#ffc107",
+                    color: game.is_completed ? "white" : "black",
+                    border: "none",
+                    borderRadius: "3px",
+                  }}
+                >
+                  {game.is_completed ? "✅ Completed" : "❌ Mark as Done"}
+                </button>
+              </div>
+
+              <button
+                onClick={() => handleDelete(game.id)}
+                style={{
+                  background: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 12px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>

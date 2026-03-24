@@ -28,4 +28,35 @@ describe("Frontend Home Page", () => {
     cy.contains("Cyberpunk 2077").should("be.visible");
     cy.contains("✅ Completed").should("be.visible");
   });
+  // Our third test: The full CRUD lifecycle
+  it("should create, update, and delete a game cleanly", () => {
+    cy.visit("http://localhost:5173");
+
+    // 1. Create a game with a unique name so we know exactly which one to delete
+    const testGameTitle = "Cypress Automated Test Game";
+
+    cy.get('input[placeholder="Title"]').type(testGameTitle);
+    cy.get('input[placeholder="Genre (e.g., RPG, FPS)"]').type("Test");
+    cy.get('input[placeholder="Release Year (e.g., 2015)"]').type("2024");
+    cy.get('input[placeholder="Rating (1-10)"]').type("9.9");
+    cy.contains("button", "Add Game").click();
+
+    // Verify it appeared
+    cy.contains(testGameTitle).should("be.visible");
+
+    // 2. Find the SPECIFIC list item (li) that contains our test game
+    cy.contains("li", testGameTitle).within(() => {
+      // Everything inside here ONLY looks inside this specific game's row!
+
+      // UPDATE: Click the Mark as Done button and verify it changes
+      cy.contains("❌ Mark as Done").click();
+      cy.contains("✅ Completed").should("be.visible");
+
+      // DELETE: Click the delete button
+      cy.contains("button", "Delete").click();
+    });
+
+    // 3. Verify that the game has been completely removed from the screen
+    cy.contains(testGameTitle).should("not.exist");
+  });
 });
