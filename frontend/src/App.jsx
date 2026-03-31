@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./App.css"; // IMPORTANT: This tells React to load your new CSS file!
+import "./App.css";
 
 function App() {
   const [games, setGames] = useState([]);
@@ -81,19 +81,19 @@ function App() {
   };
 
   return (
-    // Instead of inline styles, we now use descriptive class names
-    <div className="app-container">
-      <h1>My Game Library</h1>
-
-      <div className="form-container">
+    <div className="app-container" data-cy="app-layout">
+      
+      {/* Vänster sida: Sidebar med formulär */}
+      <aside className="sidebar" data-cy="sidebar">
         <h2>Add a New Game</h2>
-        <form onSubmit={handleAddGame} className="game-form">
+        <form onSubmit={handleAddGame} className="game-form" data-cy="add-game-form">
           <input
             type="text"
             placeholder="Title"
             value={newGame.title}
             onChange={(e) => setNewGame({ ...newGame, title: e.target.value })}
             required
+            data-cy="input-title"
           />
           <input
             type="text"
@@ -101,6 +101,7 @@ function App() {
             value={newGame.genre}
             onChange={(e) => setNewGame({ ...newGame, genre: e.target.value })}
             required
+            data-cy="input-genre"
           />
           <input
             type="number"
@@ -113,6 +114,7 @@ function App() {
               })
             }
             required
+            data-cy="input-year"
           />
           <input
             type="number"
@@ -126,6 +128,7 @@ function App() {
               })
             }
             required
+            data-cy="input-rating"
           />
           <label className="checkbox-label">
             <input
@@ -134,49 +137,58 @@ function App() {
               onChange={(e) =>
                 setNewGame({ ...newGame, is_completed: e.target.checked })
               }
+              data-cy="input-completed"
             />
             Completed?
           </label>
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary" data-cy="submit-btn">
             Add Game
           </button>
         </form>
-      </div>
+      </aside>
 
-      {isLoading ? (
-        <p>Loading games from database...</p>
-      ) : (
-        <ul className="game-list">
-          {games.map((game) => (
-            <li key={game.id} className="game-item">
-              
-              <div className="game-details">
-                <strong>{game.title}</strong> ({game.release_year}) - {game.genre}
-                <br />
-                Rating: {game.rating}/10
-              </div>
+      {/* Höger sida: Huvudinnehåll och spellista */}
+      <main className="main-content" data-cy="main-content">
+        <h1>My Game Library</h1>
 
-              <div className="game-actions">
-                <button
-                  onClick={() => handleToggleComplete(game)}
-                  // We dynamically apply either the success or warning class based on the status!
-                  className={`btn ${game.is_completed ? "btn-success" : "btn-warning"}`}
-                >
-                  {game.is_completed ? "✅ Completed" : "❌ Mark as Done"}
-                </button>
+        {isLoading ? (
+          <p data-cy="loading-text">Loading games from database...</p>
+        ) : (
+          <ul className="game-grid" data-cy="game-grid">
+            {games.map((game) => (
+              <li key={game.id} className="game-card" data-cy={`game-card-${game.id}`}>
+                
+                <div className="game-details">
+                  <strong>{game.title}</strong> ({game.release_year})
+                  <br />
+                  <span className="genre-tag">{game.genre}</span>
+                  <br />
+                  Rating: {game.rating}/10
+                </div>
 
-                <button
-                  onClick={() => handleDelete(game.id)}
-                  className="btn btn-danger"
-                >
-                  Delete
-                </button>
-              </div>
+                <div className="game-actions">
+                  <button
+                    onClick={() => handleToggleComplete(game)}
+                    className={`btn ${game.is_completed ? "btn-success" : "btn-warning"}`}
+                    data-cy={`toggle-btn-${game.id}`}
+                  >
+                    {game.is_completed ? "✅ Completed" : "❌ Mark as Done"}
+                  </button>
 
-            </li>
-          ))}
-        </ul>
-      )}
+                  <button
+                    onClick={() => handleDelete(game.id)}
+                    className="btn btn-danger"
+                    data-cy={`delete-btn-${game.id}`}
+                  >
+                    Delete
+                  </button>
+                </div>
+
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
     </div>
   );
 }
