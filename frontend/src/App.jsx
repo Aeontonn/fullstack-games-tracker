@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import "./App.css"; // IMPORTANT: This tells React to load your new CSS file!
 
 function App() {
   const [games, setGames] = useState([]);
@@ -57,15 +58,11 @@ function App() {
       .catch((error) => console.error("Error deleting game:", error));
   };
 
-  // --- NEW: UPDATE FUNCTION ---
-  // We pass the entire 'game' object so we know its current status
   const handleToggleComplete = (game) => {
-    // 1. Prepare the data: We only send the field we want to update, flipping its current boolean value
     const updatedData = {
       is_completed: !game.is_completed,
     };
 
-    // 2. Send the PUT request
     fetch(`http://localhost:8000/games/${game.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -76,8 +73,6 @@ function App() {
         return response.json();
       })
       .then((updatedGameFromServer) => {
-        // 3. Update React State using .map()
-        // If the ID matches, replace it with the new data from the server. Otherwise, keep the old game.
         setGames(
           games.map((g) => (g.id === game.id ? updatedGameFromServer : g)),
         );
@@ -86,24 +81,13 @@ function App() {
   };
 
   return (
-    <div
-      style={{ padding: "20px", fontFamily: "sans-serif", maxWidth: "600px" }}
-    >
+    // Instead of inline styles, we now use descriptive class names
+    <div className="app-container">
       <h1>My Game Library</h1>
 
-      <div
-        style={{
-          background: "#f0f0f0",
-          padding: "15px",
-          marginBottom: "20px",
-          borderRadius: "5px",
-        }}
-      >
+      <div className="form-container">
         <h2>Add a New Game</h2>
-        <form
-          onSubmit={handleAddGame}
-          style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-        >
+        <form onSubmit={handleAddGame} className="game-form">
           <input
             type="text"
             placeholder="Title"
@@ -143,26 +127,17 @@ function App() {
             }
             required
           />
-          <label>
+          <label className="checkbox-label">
             <input
               type="checkbox"
               checked={newGame.is_completed}
               onChange={(e) =>
                 setNewGame({ ...newGame, is_completed: e.target.checked })
               }
-            />{" "}
+            />
             Completed?
           </label>
-          <button
-            type="submit"
-            style={{
-              padding: "10px",
-              background: "#007bff",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
+          <button type="submit" className="btn btn-primary">
             Add Game
           </button>
         </form>
@@ -171,56 +146,33 @@ function App() {
       {isLoading ? (
         <p>Loading games from database...</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul className="game-list">
           {games.map((game) => (
-            <li
-              key={game.id}
-              style={{
-                marginBottom: "15px",
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "5px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <strong>{game.title}</strong> ({game.release_year}) -{" "}
-                {game.genre}
+            <li key={game.id} className="game-item">
+              
+              <div className="game-details">
+                <strong>{game.title}</strong> ({game.release_year}) - {game.genre}
                 <br />
                 Rating: {game.rating}/10
-                {/* --- NEW: TOGGLE BUTTON --- */}
-                {/* We replaced the static text with a button that triggers our new function */}
+              </div>
+
+              <div className="game-actions">
                 <button
                   onClick={() => handleToggleComplete(game)}
-                  style={{
-                    marginLeft: "10px",
-                    padding: "4px 8px",
-                    cursor: "pointer",
-                    background: game.is_completed ? "#28a745" : "#ffc107",
-                    color: game.is_completed ? "white" : "black",
-                    border: "none",
-                    borderRadius: "3px",
-                  }}
+                  // We dynamically apply either the success or warning class based on the status!
+                  className={`btn ${game.is_completed ? "btn-success" : "btn-warning"}`}
                 >
                   {game.is_completed ? "✅ Completed" : "❌ Mark as Done"}
                 </button>
+
+                <button
+                  onClick={() => handleDelete(game.id)}
+                  className="btn btn-danger"
+                >
+                  Delete
+                </button>
               </div>
 
-              <button
-                onClick={() => handleDelete(game.id)}
-                style={{
-                  background: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Delete
-              </button>
             </li>
           ))}
         </ul>
