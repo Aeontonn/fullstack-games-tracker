@@ -25,6 +25,14 @@ def read_games(db: Session = Depends(get_db)):
   return games
 
 # Endpoint to retrieve a single game by its ID
+@router.get("/games/{game_id}", response_model=game_schema.Game)
+def read_game(game_id: int, db: Session = Depends(get_db)):
+  db_game = db.query(game_model.GameModel).filter(game_model.GameModel.id == game_id).first()
+  if db_game is None:
+    raise HTTPException(status_code=404, detail="Game not found")
+  return db_game
+
+# Endpoint to update a game by its ID
 @router.put("/games/{game_id}", response_model=game_schema.Game)
 def update_game(
   game_id: int,
